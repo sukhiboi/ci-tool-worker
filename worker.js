@@ -30,7 +30,7 @@ const updateEslintResults = function (id, result) {
   return new Promise((res, rej) => {
     client.hmset(
       id,
-      ['eslint', JSON.stringify(result), 'status', 'completed'],
+      ['eslint', JSON.stringify(result), 'status', 'completed', 'completedAt', new Date().toJSON()],
       (err) => {
         if (err) {
           rej(err);
@@ -59,7 +59,6 @@ const serve = function () {
       });
     })
     .catch(() => {
-      console.log('NO JOB');
       serve();
     });
 };

@@ -84,7 +84,7 @@ const lintRepo = function (payload) {
           return new Promise((resolve) => {
             lint(repoName, payload).then((report) => {
               res(report);
-              resolve();
+              resolve(deleteLocalRepo(repoName));
             });
           });
         },
