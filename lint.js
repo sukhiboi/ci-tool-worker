@@ -44,7 +44,7 @@ const installEslint = function (repoName) {
 
 const lint = function (repoName) {
   return new Promise((res) => {
-    exec(`cd ${repoName}; eslint *.js`, (err, stdout, stderr) => {
+    exec(`cd ${repoName}; eslint ./**/*.js`, (err, stdout, stderr) => {
       const eslintReport = { eslint: { warnings: stdout } };
       if (err) {
         eslintReport.eslint = { errors: stderr, warnings: stdout };
