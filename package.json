@@ -1,0 +1,25 @@
+{
+  "name": "linter-worker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lint.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sukhiboi/linter-worker.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sukhiboi/linter-worker/issues"
+  },
+  "homepage": "https://github.com/sukhiboi/linter-worker#readme",
+  "dependencies": {
+    "eslint": "^7.3.1",
+    "listr": "^0.14.3",
+    "redis": "^3.0.2"
+  }
+}
