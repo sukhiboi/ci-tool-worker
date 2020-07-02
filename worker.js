@@ -16,7 +16,7 @@ const updateDataCategory = workerType === 'linter' ? 'eslint' : 'test';
 const client = redis.createClient(redisOptions);
 
 const getJob = function () {
-  const timeout = 1;
+  const timeout = 30;
   return new Promise((resolve, rej) => {
     client.brpop(queueBroker, timeout, (err, res) => {
       if (err) {
