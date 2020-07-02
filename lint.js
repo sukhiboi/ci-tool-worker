@@ -43,9 +43,7 @@ const installEslint = function (repoName) {
 };
 
 const generateReport = function (eslintResult) {
-  const [, , ...result] = eslintResult.eslint
-    .split('\\n')
-    .map((line) => line.trim());
+  const [, , ...result] = eslintResult.split('\n').map((line) => line.trim());
 
   const parseEslintLine = function (report, line) {
     if (line.includes('error')) {
@@ -64,7 +62,7 @@ const lint = function (repoName) {
       if (err) {
         res(generateReport(stdout));
       }
-      res(stdout);
+      res(generateReport(stdout));
     });
   });
 };
