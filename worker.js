@@ -1,19 +1,24 @@
 const { lintRepo } = require('./lint');
+const { testRepo } = require('./testRunner');
 const redis = require('redis');
 const redisConnectionDetails = require('./secret.json');
 
 let redisOptions = redisConnectionDetails.production;
-const [, , env] = process.argv;
+const [, , workerType, env] = process.argv;
 if (env === 'dev') {
   redisOptions = redisConnectionDetails.dev;
 }
+
+const processor = workerType === 'linter' ? lintRepo : testRepo;
+const queueBroker = workerType === 'linter' ? 'lintQueue' : 'testQueue';
+const updateDataCategory = workerType === 'linter' ? 'eslint' : 'test';
 
 const client = redis.createClient(redisOptions);
 
 const getJob = function () {
   const timeout = 1;
   return new Promise((resolve, rej) => {
-    client.brpop('queue', timeout, (err, res) => {
+    client.brpop(queueBroker, timeout, (err, res) => {
       if (err) {
         rej('no job');
       }
@@ -26,12 +31,12 @@ const getJob = function () {
   });
 };
 
-const updateEslintResults = function (id, result) {
+const updateResults = function (id, result) {
   return new Promise((res, rej) => {
     client.hmset(
       id,
       [
-        'eslint',
+        updateDataCategory,
         result,
         'status',
         'completed',
@@ -49,25 +54,25 @@ const updateEslintResults = function (id, result) {
   });
 };
 
-const serve = function () {
+const serve = function (processor) {
   getJob()
     .then((id) => {
       client.hgetall(id, (err, res) => {
         if (err) {
           console.error('Error while fetching job');
-          serve();
+          serve(processor);
         } else {
-          lintRepo(res).then((result) => {
-            updateEslintResults(id, result).then(() => {
-              serve();
+          processor(res).then((result) => {
+            updateResults(id, result).then(() => {
+              serve(processor);
             });
           });
         }
       });
     })
     .catch(() => {
-      serve();
+      serve(processor);
     });
 };
 
-serve();
+serve(processor);
