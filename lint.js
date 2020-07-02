@@ -42,27 +42,13 @@ const installEslint = function (repoName) {
   });
 };
 
-const generateReport = function (eslintResult) {
-  const [, , ...result] = eslintResult.split('\n').map((line) => line.trim());
-
-  const parseEslintLine = function (report, line) {
-    if (line.includes('error')) {
-      return { ...report, errors: [...report.errors, line] };
-    }
-    return { ...report, warnings: [...report.warnings, line] };
-  };
-
-  const report = result.reduce(parseEslintLine, { errors: [], warnings: [] });
-  return report;
-};
-
 const lint = function (repoName) {
   return new Promise((res) => {
-    exec(`cd ${repoName}; eslint ./**/*.js`, (err, stdout) => {
+    exec(`cd ${repoName}; eslint -f json ./**/*.js`, (err, stdout) => {
       if (err) {
-        res(generateReport(stdout));
+        res(stdout);
       }
-      res(generateReport(stdout));
+      res(stdout);
     });
   });
 };
