@@ -37,7 +37,6 @@ const installMocha = function (repoName) {
 const test = function (repoName) {
   return new Promise((res) => {
     exec(`cd testingTemp/${repoName}; mkdir test; mocha`, (err, stdout) => {
-      console.log(stdout)
       if (err) {
         res('failing');
       }
