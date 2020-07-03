@@ -1,5 +1,11 @@
+const redis = require('redis');
 const { exec } = require('child_process');
 const Listr = require('listr');
+
+const worker = require('./worker');
+const [, , env] = process.argv;
+const redisOptions = require('./secret.json')[env];
+const client = redis.createClient(redisOptions);
 
 const createTempFolder = function () {
   return new Promise((res) => {
@@ -86,4 +92,4 @@ const testRepo = function (payload) {
   });
 };
 
-module.exports = { testRepo };
+worker(client, 'testQueue', 1, 'test', testRepo);

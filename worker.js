@@ -1,78 +1,35 @@
-const { lintRepo } = require('./lint');
-const { testRepo } = require('./testRunner');
-const redis = require('redis');
-const redisConnectionDetails = require('./secret.json');
+const { hgetall, brpop, hmset } = require('./redisFunctions');
 
-let redisOptions = redisConnectionDetails.production;
-const [, , workerType, env] = process.argv;
-if (env === 'dev') {
-  redisOptions = redisConnectionDetails.dev;
-}
-
-const processor = workerType === 'linter' ? lintRepo : testRepo;
-const queueBroker = workerType === 'linter' ? 'lintQueue' : 'testQueue';
-const updateDataCategory = workerType === 'linter' ? 'eslint' : 'test';
-
-const client = redis.createClient(redisOptions);
-
-const getJob = function () {
-  const timeout = 30;
-  return new Promise((resolve, rej) => {
-    client.brpop(queueBroker, timeout, (err, res) => {
-      if (err) {
-        rej('no job');
-      }
-      if (res) {
-        const [, id] = res;
-        resolve(id);
-      }
-      rej('no job');
-    });
-  });
+const parseJobDetails = function (jobDetails) {
+  const parsedDetails = Object.keys(jobDetails).reduce((parsed, detail) => {
+    return [...parsed, detail, jobDetails[detail]];
+  }, []);
+  return parsedDetails;
 };
 
-const updateResults = function (id, result) {
-  return new Promise((res, rej) => {
-    client.hmset(
-      id,
-      [
-        updateDataCategory,
-        result,
-        'status',
-        'completed',
-        'completedAt',
-        new Date().toJSON(),
-      ],
-      (err) => {
-        if (err) {
-          rej(err);
-        } else {
-          res();
-        }
-      }
-    );
-  });
+const updateJobDetails = function (jobResult, jobTitle) {
+  const updatedJobDetails = {
+    status: 'completed',
+    completedAt: new Date().toJSON(),
+  };
+  updatedJobDetails[jobTitle] = jobResult;
+  return parseJobDetails(updatedJobDetails);
 };
 
-const serve = function (processor) {
-  getJob()
-    .then((id) => {
-      client.hgetall(id, (err, res) => {
-        if (err) {
-          console.error('Error while fetching job');
-          serve(processor);
-        } else {
-          processor(res).then((result) => {
-            updateResults(id, result).then(() => {
-              serve(processor);
-            });
+const worker = function (client, queue, timeout = 10, jobTitle, handler) {
+  brpop(client, queue, timeout)
+    .then((jobId) => hmset(client, jobId, ['pickedAt', new Date().toJSON()]))
+    .then((jobId) => {
+      hgetall(client, jobId)
+        .then((job) => handler(job))
+        .then((result) => {
+          const jobDetails = updateJobDetails(result, jobTitle);
+          hmset(client, jobId, jobDetails).then(() => {
+            worker(client, queue, jobTitle, timeout, handler);
           });
-        }
-      });
+        });
     })
-    .catch(() => {
-      serve(processor);
-    });
+    .catch(() => worker(client, queue, jobTitle, timeout, handler));
 };
 
-serve(processor);
+module.exports = worker;
