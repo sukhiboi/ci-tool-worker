@@ -3,6 +3,7 @@
         "brpop",
         "hgetall",
         "hmset",
+        "listr",
         "lpush"
     ]
 }

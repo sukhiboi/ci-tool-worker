@@ -18,9 +18,10 @@
   },
   "homepage": "https://github.com/sukhiboi/linter-worker#readme",
   "dependencies": {
-    "eslint": "^7.3.1",
+    "eslint": "^7.4.0",
     "listr": "^0.14.3",
     "mocha": "^8.0.1",
     "redis": "^3.0.2"
-  }
+  },
+  "devDependencies": {}
 }
