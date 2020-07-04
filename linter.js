@@ -65,7 +65,7 @@ const lint = function (githubPayload) {
         task: () => execute(`rm -rf lintTemp/${repoName}`),
       },
     ]);
-    console.log(`Processing ${jobId}\n`);
+    console.log(`\nProcessing ${jobId}\n`);
     tasks.run();
   });
 };
