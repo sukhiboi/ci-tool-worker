@@ -9,8 +9,8 @@ const redisOptions = require('./secret.json')[env];
 const client = redis.createClient(redisOptions);
 
 const execute = function (command) {
-  return new Promise((resolve, reject) => {
-    exec(command, (err, stdout, stderr) => {
+  return new Promise((resolve) => {
+    exec(command, (err, stdout) => {
       if (err) return resolve(stdout);
       resolve(stdout);
     });
@@ -18,13 +18,13 @@ const execute = function (command) {
 };
 
 const lint = function (githubPayload) {
-  return new Promise((res, rej) => {
+  return new Promise((res) => {
     const { cloneUrl, repoName, jobId } = githubPayload;
     const tasks = new Listr([
       {
         title: 'Creating temporary director',
         task: () => {
-          return new Promise((resolve, reject) => {
+          return new Promise((resolve) => {
             execute('mkdir lintTemp').then(resolve).catch(resolve);
           });
         },
@@ -34,25 +34,38 @@ const lint = function (githubPayload) {
         task: () => execute(`cd lintTemp; git clone ${cloneUrl}`),
       },
       {
-        title: 'Cloning .eslintrc',
-        skip: () => {
-          if (existsSync(`./lintTemp/${repoName}/.eslintrc`))
-            return '.eslintrc already exists';
-        },
+        title: 'Setting up Eslint',
         task: () => {
-          const curlCommand =
-            'curl -s https://gist.githubusercontent.com/sukhiboi/a8d7e70398b4317e37cd04b135df243c/raw/084dc3cd1a9f7693354f63260f73a9feec91b70d/.eslintrc';
-          return execute(`${curlCommand} >> ./lintTemp/${repoName}/.eslintrc`);
+          return new Listr(
+            [
+              {
+                title: 'Cloning .eslintrc',
+                skip: () => {
+                  if (existsSync(`./lintTemp/${repoName}/.eslintrc`))
+                    return '.eslintrc already exists';
+                },
+                task: () => {
+                  const curlCommand =
+                    'curl -s https://gist.githubusercontent.com/sukhiboi/a8d7e70398b4317e37cd04b135df243c/raw/084dc3cd1a9f7693354f63260f73a9feec91b70d/.eslintrc';
+                  return execute(
+                    `${curlCommand} >> ./lintTemp/${repoName}/.eslintrc`
+                  );
+                },
+              },
+              {
+                title: 'Installing Eslint',
+                task: () =>
+                  execute(`cd lintTemp/${repoName}; npm install eslint`),
+              },
+            ],
+            { concurrent: true }
+          );
         },
-      },
-      {
-        title: 'Installing Eslint',
-        task: () => execute(`cd lintTemp/${repoName}; npm install eslint`),
       },
       {
         title: 'Linting',
         task: () => {
-          return new Promise((resolve, reject) => {
+          return new Promise((resolve) => {
             const command = `eslint --format html --ignore-pattern 'node_modules/' lintTemp/${repoName} --ext .js`;
             execute(command).then((result) => {
               resolve(res(result));
