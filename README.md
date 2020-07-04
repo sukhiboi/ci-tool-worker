@@ -2,7 +2,7 @@
 
 This repo contains the code of a workers which works for the the ci-step system.  
 You can visit the repo of ci-step via this link [sukhiboi/ci-tool](https://github.com/sukhiboi/ci-tool)  
-You can visit the repo of ci-step via this link [ci-tool](https://ci-step.herokuapp.com)
+You can access the ci-step system via this link [ci-tool](https://ci-step.herokuapp.com)
 
 ---
 
