@@ -4,6 +4,8 @@
         "hgetall",
         "hmset",
         "listr",
-        "lpush"
+        "lpush",
+        "sadd",
+        "scard"
     ]
 }
