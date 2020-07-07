@@ -1,5 +1,4 @@
 const { hgetall, brpop, hmset, sadd } = require('./lib/redisFunctions');
-const { subtractDates } = require('./utils');
 
 const parseJobDetails = function (jobDetails) {
   const parsedDetails = Object.keys(jobDetails).reduce((parsed, detail) => {
@@ -35,21 +34,11 @@ const worker = function (workerOptions) {
     })
     .then((jobId) => {
       hgetall(client, jobId)
-        .then((job) => {
-          const scheduledAtKey = `${jobTitle}ScheduledAt`;
-          const waitingTime = subtractDates(startedAt, job[scheduledAtKey]);
-          console.log(`Waiting Time - ${waitingTime}`);
-          return handler(job);
-        })
+        .then((job) => handler(job))
         .then((result) => {
           const jobDetails = updateJobDetails(result, jobTitle, statusKey);
           hmset(client, jobId, jobDetails).then(() => {
-            const startedAtKey = `${jobTitle}StartedAt`;
-            const executionTime = subtractDates(startedAt, job[startedAtKey]);
-            console.log(`Execution Time - ${executionTime}`);
-            sadd(client, jobSet, jobId).then(() => {
-              worker(workerOptions);
-            });
+            sadd(client, jobSet, jobId).then(() => worker(workerOptions));
           });
         });
     })
