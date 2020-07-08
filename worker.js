@@ -1,3 +1,4 @@
+const chalk = require('chalk');
 const { hgetall, brpop, hmset, sadd } = require('./lib/redisFunctions');
 
 const parseJobDetails = function (jobDetails) {
@@ -20,24 +21,31 @@ const getJobDetailsForProcessing = function (jobTitle, statusKey) {
   return [`${jobTitle}StartedAt`, new Date().toJSON(), statusKey, 'processing'];
 };
 
+const printLog = function (message) {
+  const prompt = chalk.bold.green(`${new Date().toJSON()} >`);
+  console.log(`${prompt} ${chalk.bold(message)}`);
+};
+
 const worker = function (options) {
-  const { client, jobSet, jobTitle, timeout, statusKey } = workerOptions;
+  const { client, jobSet, jobTitle, timeout, statusKey } = options;
   brpop(client, options.queue, timeout)
     .then((jobId) => {
       const processingDetails = getJobDetailsForProcessing(jobTitle, statusKey);
       return hmset(client, jobId, processingDetails);
     })
     .then((jobId) => {
+      printLog(`Started ${jobId}`);
       hgetall(client, jobId)
         .then((job) => options.handler(job))
         .then((result) => {
           const jobDetails = getFinalDetails(result, jobTitle, statusKey);
           hmset(client, jobId, jobDetails).then(() => {
-            sadd(client, jobSet, jobId).then(() => worker(workerOptions));
+            printLog(`Completed ${jobId}`);
+            sadd(client, jobSet, jobId).then(() => worker(options));
           });
         });
     })
-    .catch(() => worker(workerOptions));
+    .catch(() => worker(options));
 };
 
 module.exports = worker;
