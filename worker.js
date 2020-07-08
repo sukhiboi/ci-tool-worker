@@ -7,7 +7,7 @@ const parseJobDetails = function (jobDetails) {
   return parsedDetails;
 };
 
-const updateJobDetails = function (jobResult, jobTitle, statusKey) {
+const getFinalDetails = function (jobResult, jobTitle, statusKey) {
   const updatedJobDetails = {};
   const jobCompletedKey = `${jobTitle}CompletedAt`;
   updatedJobDetails[jobCompletedKey] = new Date().toJSON();
@@ -16,27 +16,22 @@ const updateJobDetails = function (jobResult, jobTitle, statusKey) {
   return parseJobDetails(updatedJobDetails);
 };
 
-const worker = function (workerOptions) {
-  const {
-    client,
-    queue,
-    jobSet,
-    jobTitle,
-    timeout,
-    handler,
-    statusKey,
-  } = workerOptions;
-  brpop(client, queue, timeout)
+const getJobDetailsForProcessing = function (jobTitle, statusKey) {
+  return [`${jobTitle}StartedAt`, new Date().toJSON(), statusKey, 'processing'];
+};
+
+const worker = function (options) {
+  const { client, jobSet, jobTitle, timeout, statusKey } = workerOptions;
+  brpop(client, options.queue, timeout)
     .then((jobId) => {
-      const startedAt = new Date().toJSON();
-      const updateDetails = [`${jobTitle}StartedAt`, startedAt];
-      return hmset(client, jobId, [...updateDetails, statusKey, 'processing']);
+      const processingDetails = getJobDetailsForProcessing(jobTitle, statusKey);
+      return hmset(client, jobId, processingDetails);
     })
     .then((jobId) => {
       hgetall(client, jobId)
-        .then((job) => handler(job))
+        .then((job) => options.handler(job))
         .then((result) => {
-          const jobDetails = updateJobDetails(result, jobTitle, statusKey);
+          const jobDetails = getFinalDetails(result, jobTitle, statusKey);
           hmset(client, jobId, jobDetails).then(() => {
             sadd(client, jobSet, jobId).then(() => worker(workerOptions));
           });
