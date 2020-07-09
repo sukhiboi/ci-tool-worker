@@ -1,22 +1,22 @@
-# $1 - number of jobs
-# $2 - number of workers
-# $3 - jobType (should be capatilized)
+# $1 - number of workers
+# $2 - jobType (should be capatilized)
+# $3 - workerType
+# $4 - numberOfJobs
 
 declare -a pidArray
 length=${#pidArray[@]}
 
-while [ $length -lt $2 ]
+while [ $length -lt $1 ]
 do
-  node lib/tester.js dev &
+  node lib/$3.js dev &
   pidArray[${length}]=`echo $!`
   length=`expr $length + 1`
 done
 
-./runJobs.sh $1
-node benchmark.js $1 $3
+node benchmark.js $4 $2
 
 index=0
-while [ $index -lt $2 ]
+while [ $index -lt $1 ]
 do
   kill -9 ${pidArray[${index}]} &> /dev/null
   index=`expr $index + 1`
