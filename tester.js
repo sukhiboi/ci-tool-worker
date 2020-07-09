@@ -1,8 +1,8 @@
 const { exec } = require('child_process');
 const redis = require('redis');
-const worker = require('./../worker');
+const worker = require('./src/worker');
 const [, , env] = process.argv;
-const redisOptions = require('../config.json')[env];
+const redisOptions = require('./config.json')[env];
 const client = redis.createClient(redisOptions);
 
 const execute = function (command) {
