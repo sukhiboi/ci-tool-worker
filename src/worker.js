@@ -1,5 +1,5 @@
 const chalk = require('chalk');
-const { hgetall, brpop, hmset } = require('./lib/redisFunctions');
+const { hgetall, brpop, hmset } = require('./../lib/redisFunctions');
 
 const parseJobDetails = function (jobDetails) {
   const parsedDetails = Object.keys(jobDetails).reduce((parsed, detail) => {
