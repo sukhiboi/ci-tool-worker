@@ -1,5 +1,5 @@
 const chalk = require('chalk');
-const { hgetall, brpop, hmset, sadd } = require('./lib/redisFunctions');
+const { hgetall, brpop, hmset } = require('./lib/redisFunctions');
 
 const parseJobDetails = function (jobDetails) {
   const parsedDetails = Object.keys(jobDetails).reduce((parsed, detail) => {
@@ -27,7 +27,7 @@ const printLog = function (message) {
 };
 
 const worker = function (options) {
-  const { client, jobSet, jobTitle, timeout, statusKey } = options;
+  const { client, jobTitle, timeout, statusKey } = options;
   brpop(client, options.queue, timeout)
     .then((jobId) => {
       const processingDetails = getJobDetailsForProcessing(jobTitle, statusKey);
@@ -41,7 +41,7 @@ const worker = function (options) {
           const jobDetails = getFinalDetails(result, jobTitle, statusKey);
           hmset(client, jobId, jobDetails).then(() => {
             printLog(`Completed ${jobId}`);
-            sadd(client, jobSet, jobId).then(() => worker(options));
+            worker(options);
           });
         });
     })
