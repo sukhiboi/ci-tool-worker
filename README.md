@@ -1,7 +1,7 @@
 # CI-STEP-WORKER
 
 This repo contains the code of a workers which works for the the ci-step system.  
-You can visit the repo of ci-step via this link [sukhiboi/ci-tool](https://github.com/sukhiboi/ci-tool)  
+You can visit the repo of ci-step via this link [sukhiboi/ci-server](https://github.com/sukhiboi/ci-server)  
 You can access the ci-step system via this link [ci-tool](https://ci-step.herokuapp.com)
 
 ---
@@ -35,8 +35,7 @@ It will create a temp directory named as 'tempTest' and work there only.
 What all it will do
 
 - Clone the repo
-- Install dependencies
-- Install mocha, chai, supertest
+- Make a symbolic link to worker's node_modules
 - Run tests in the repo
 - Update the result in the redis
 
@@ -50,7 +49,7 @@ It will create a temp directory named as 'tempLint' and work there only.
 What all it will do
 
 - Clone the repo
-- Install eslint
+- Make a symbolic link to worker's node_modules
 - Clone .eslintrc if not available
 - Perform linting
 - Update the result in the redis
